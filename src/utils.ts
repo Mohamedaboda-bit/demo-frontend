@@ -3,12 +3,41 @@ type QuestionData = {
   threadId: string,
 }
 
+/**
+ * Generates a UUID v4. Uses crypto.randomUUID() if available (modern browsers),
+ * otherwise falls back to a manual UUID v4 generation using crypto.getRandomValues().
+ */
+export function generateUUID(): string {
+  // Use crypto.randomUUID() if available (Chrome 92+, Firefox 95+, Safari 15.4+)
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  // Fallback: Generate UUID v4 manually using crypto.getRandomValues()
+  // This is supported in all modern browsers (IE11+, Chrome, Firefox, Safari, Edge)
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (crypto.getRandomValues(new Uint8Array(1))[0] % 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  // Last resort fallback (should never happen in modern browsers)
+  // Using Math.random() which is not cryptographically secure but will work
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export const sendQuestion = async (
   params: QuestionData,
   onChunk?: (chunk: string) => void
 ) => {
   try {
-    const response = await fetch('/agent/stream', {
+    const response = await fetch('http://localhost:3000/agent/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

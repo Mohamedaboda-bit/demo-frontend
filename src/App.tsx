@@ -1,6 +1,6 @@
 import { type FormEvent, useState } from "react";
 import './index.css'
-import { sendQuestion } from "./utils.ts";
+import { sendQuestion, generateUUID } from "./utils.ts";
 import Markdown from "markdown-to-jsx";
 // import "github-markdown-css";
 
@@ -10,13 +10,13 @@ function App() {
   type QAItem = { id: string; question: string; answer: string; loading: boolean };
   const [history, setHistory] = useState<QAItem[]>([]);
   // Keep a persistent threadId for the current chat session
-  const [threadId, setThreadId] = useState<string>(() => crypto.randomUUID());
+  const [threadId, setThreadId] = useState<string>(() => generateUUID());
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!question.trim()) return;
 
-    const id = crypto.randomUUID();
+    const id = generateUUID();
 
     // Add a new QA item for this question
     setHistory(prev => [
@@ -50,7 +50,7 @@ function App() {
   const startNewChat = () => {
     // Reset history and generate a new threadId
     setHistory([]);
-    setThreadId(crypto.randomUUID());
+    setThreadId(generateUUID());
   };
 
   return (
