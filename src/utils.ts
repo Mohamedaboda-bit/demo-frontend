@@ -5,7 +5,7 @@ type QuestionData = {
   swap?: boolean;
 }
 
-type ChunkData = {
+export type ChunkData = {
   node: string;
   content: string;
   type: string;
