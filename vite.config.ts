@@ -13,4 +13,7 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    allowedHosts: ['db16bc35fd36.ngrok-free.app'],
+  },
 })

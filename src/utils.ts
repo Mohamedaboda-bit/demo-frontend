@@ -1,6 +1,14 @@
 type QuestionData = {
-  message: string,
-  threadId: string,
+  message?: string;
+  expertPromptId?: number;
+  threadId: string;
+  swap?: boolean;
+}
+
+type ChunkData = {
+  node: string;
+  content: string;
+  type: string;
 }
 
 /**
@@ -34,10 +42,10 @@ export function generateUUID(): string {
 
 export const sendQuestion = async (
   params: QuestionData,
-  onChunk?: (chunk: string) => void
+  onChunk?: (chunk: ChunkData) => void
 ) => {
   try {
-    const response = await fetch('http://localhost:3000/agent/stream', {
+    const response = await fetch('http://localhost:3001/agent/stream', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -77,8 +85,8 @@ export const sendQuestion = async (
 
           try {
             const data = JSON.parse(jsonString);
-            if (data.content && onChunk) {
-              onChunk(data.content);
+            if (onChunk) {
+              onChunk(data);
             }
           } catch {
             // Sometimes the chunk might be incomplete JSON, skip safely

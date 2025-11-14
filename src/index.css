@@ -95,10 +95,45 @@ button:focus-visible {
   z-index: 1000;
 }
 
+
 .new-chat-btn {
   background-color: #0f172a;
   border: 1px solid #374151;
   color: #e5e7eb;
+}
+
+.enhance-btn {
+  background-color: #1a1a1a;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  border-radius: 8px;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.25s;
+}
+
+.enhance-btn:hover {
+  border-color: #60a5fa;
+}
+
+.enhance-btn.active {
+  background-color: #60a5fa;
+  color: #1a1a1a;
+}
+
+.enhance-btn:disabled {
+  background-color: #374151;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .new-chat-btn:hover {
@@ -133,3 +168,31 @@ button:focus-visible {
   margin-top: 3rem;
 }
 
+.prompts-container {
+  margin-top: 2rem;
+}
+
+.prompts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.prompt-card {
+  background-color: #0f172a;
+  border: 1px solid #374151;
+  color: #e5e7eb;
+  border-radius: 8px;
+  padding: 1em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.25s;
+  text-align: left;
+}
+
+.prompt-card:hover {
+  border-color: #60a5fa;
+}
