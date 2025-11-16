@@ -1,6 +1,6 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useState, useEffect } from "react";
 import './index.css'
-import { sendQuestion, generateUUID, type ChunkData } from "./utils.ts";
+import { sendQuestion, generateUUID, type ChunkData, getProviders, type Provider } from "./utils.ts";
 import Markdown from "markdown-to-jsx";
 import { Prompts } from "./Prompts.tsx";
 
@@ -14,6 +14,26 @@ function App() {
   const [showPrompts, setShowPrompts] = useState(false);
   const [isEnhanced, setIsEnhanced] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>("");
+
+  useEffect(() => {
+    const fetchProviders = async () => {
+      try {
+        const providersData = await getProviders();
+        setProviders(providersData);
+        if (providersData.length > 0) {
+          setSelectedProvider(providersData[0].provider);
+          setSelectedModel(providersData[0].models[0]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch providers:", error);
+      }
+    };
+
+    fetchProviders();
+  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,6 +56,8 @@ function App() {
         // Use the same threadId for all questions in the current chat
         threadId: `user-${threadId}`,
         swap: isEnhanced,
+        provider: selectedProvider,
+        model: selectedModel,
       },
       (chunk: ChunkData) => {
         if (chunk.node === 'enhancer') {
@@ -115,6 +137,15 @@ function App() {
     setShowPrompts(false);
   };
 
+  const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const provider = e.target.value;
+    setSelectedProvider(provider);
+    const providerData = providers.find(p => p.provider === provider);
+    if (providerData) {
+      setSelectedModel(providerData.models[0]);
+    }
+  };
+
   return (
     <>
       <h1>What’s on your mind today?</h1>
@@ -128,16 +159,28 @@ function App() {
             onChange={(e) => setQuestion(e.target.value)}
             value={question}
           />
-          <button 
-            type="button" 
+          <button
+            type="button"
             className={`enhance-btn ${isEnhanced ? 'active' : ''}`}
-            onClick={() => setIsEnhanced(!isEnhanced)} 
+            onClick={() => setIsEnhanced(!isEnhanced)}
             disabled={history.length > 0}
             title="Enhance your prompt with AI"
           >
             Enhance
           </button>
         </form>
+        <div className="flex items-center space-x-2">
+          <select value={selectedProvider} onChange={handleProviderChange} className="p-2 border rounded">
+            {providers.map(p => (
+              <option key={p.provider} value={p.provider}>{p.provider}</option>
+            ))}
+          </select>
+          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="p-2 border rounded">
+            {providers.find(p => p.provider === selectedProvider)?.models.map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
         <button type="button" className="new-chat-btn" onClick={startNewChat} title="Start a new chat">
           New Chat
         </button>

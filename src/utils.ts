@@ -3,7 +3,28 @@ type QuestionData = {
   expertPromptId?: number;
   threadId: string;
   swap?: boolean;
+  provider?: string;
+  model?: string;
 }
+
+export type Provider = {
+  provider: string;
+  models: string[];
+}
+
+export const getProviders = async (): Promise<Provider[]> => {
+  try {
+    const response = await fetch('http://localhost:3001/agent/providers');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const providers = await response.json();
+    return providers;
+  } catch (error) {
+    console.error('Failed to fetch providers:', error);
+    throw error;
+  }
+};
 
 export type ChunkData = {
   node: string;
