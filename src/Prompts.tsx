@@ -7,7 +7,7 @@ type Prompt = {
 };
 
 type PromptsProps = {
-  onPromptClick: (id: number) => void;
+  onPromptClick: (prompt: Prompt) => void;
 };
 
 export function Prompts({ onPromptClick }: PromptsProps) {
@@ -55,7 +55,7 @@ export function Prompts({ onPromptClick }: PromptsProps) {
       <div className="prompts-grid">
         {prompts.length > 0 ? (
           prompts.map((prompt) => (
-            <div key={prompt.id} className="prompt-card" onClick={() => onPromptClick(prompt.id)}>
+            <div key={prompt.id} className="prompt-card" onClick={() => onPromptClick(prompt)}>
               {prompt.question.length > 60 ? prompt.question.substring(0, 60) + '...' : prompt.question}
             </div>
           ))

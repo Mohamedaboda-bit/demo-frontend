@@ -3,11 +3,18 @@ import './index.css'
 import { sendQuestion, generateUUID, type ChunkData, getProviders, type Provider } from "./utils.ts";
 import Markdown from "markdown-to-jsx";
 import { Prompts } from "./Prompts.tsx";
+import TokenCounter from "./components/TokenCounter.tsx"; // Import the TokenCounter component
+
+type Prompt = {
+  id: number;
+  question: string;
+};
+
+type QAItem = { id: string; question: string; answer: string; loading: boolean; expertPromptId?: number; elapsedTime: number };
 
 function App() {
 
   const [question, setQuestion] = useState("")
-  type QAItem = { id: string; question: string; answer: string; loading: boolean; expertPromptId?: number };
   const [history, setHistory] = useState<QAItem[]>([]);
   // Keep a persistent threadId for the current chat session
   const [threadId, setThreadId] = useState<string>(() => generateUUID());
@@ -17,6 +24,28 @@ function App() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
+
+  // State for token usage
+  const [totalInputTokens, setTotalInputTokens] = useState(0);
+  const [totalOutputTokens, setTotalOutputTokens] = useState(0);
+  const [totalTokens, setTotalTokens] = useState(0);
+
+  // State for the active timer
+  const [activeTimerId, setActiveTimerId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let interval: number | undefined;
+    if (activeTimerId) {
+      interval = setInterval(() => {
+        setHistory(prev =>
+          prev.map(item =>
+            item.id === activeTimerId ? { ...item, elapsedTime: item.elapsedTime + 1 } : item
+          )
+        );
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [activeTimerId]);
 
   useEffect(() => {
     const fetchProviders = async () => {
@@ -35,6 +64,42 @@ function App() {
     fetchProviders();
   }, []);
 
+  const handleChunk = (id: string, chunk: ChunkData) => {
+    // Start timer on first chunk
+    if (activeTimerId !== id) {
+      setActiveTimerId(id);
+    }
+
+    if (chunk.node === 'enhancer') {
+      setStatusMessage('enhancing prompt...');
+    } else if (chunk.node === 'ai' && chunk.content === 'generating') {
+      setStatusMessage('generating...');
+    } else if (chunk.node === 'model_request') {
+      setStatusMessage('');
+      setHistory(prev => prev.map(item =>
+        item.id === id ? {...item, answer: item.answer + chunk.content} : item
+      ));
+    } else if (chunk.type === 'done' && chunk.node === 'system') { // Check for the 'done' system message
+      // Stop timer
+      setActiveTimerId(null);
+      try {
+        const content = JSON.parse(chunk.content);
+        if (content.tokenUsage) {
+          setTotalInputTokens(prev => prev + content.tokenUsage.inputTokens);
+          setTotalOutputTokens(prev => prev + content.tokenUsage.outputTokens);
+          setTotalTokens(prev => prev + content.tokenUsage.totalTokens);
+        }
+      } catch (e) {
+        console.error("Failed to parse token usage JSON:", e);
+      }
+    } else {
+      // Default handling for other content chunks
+      setHistory(prev => prev.map(item =>
+        item.id === id ? {...item, answer: item.answer + chunk.content} : item
+      ));
+    }
+  };
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!question.trim()) return;
@@ -44,7 +109,7 @@ function App() {
     // Add a new QA item for this question
     setHistory(prev => [
       ...prev,
-      {id, question, answer: "", loading: true}
+      {id, question, answer: "", loading: true, elapsedTime: 0}
     ]);
 
     // Clear input for next question
@@ -53,28 +118,12 @@ function App() {
     await sendQuestion(
       {
         message: question,
-        // Use the same threadId for all questions in the current chat
         threadId: `user-${threadId}`,
         swap: isEnhanced,
         provider: selectedProvider,
         model: selectedModel,
       },
-      (chunk: ChunkData) => {
-        if (chunk.node === 'enhancer') {
-          setStatusMessage('enhancing prompt...');
-        } else if (chunk.node === 'ai' && chunk.content === 'generating') {
-          setStatusMessage('generating...');
-        } else if (chunk.node === 'model_request') {
-          setStatusMessage('');
-          setHistory(prev => prev.map(item =>
-            item.id === id ? {...item, answer: item.answer + chunk.content} : item
-          ));
-        } else {
-          setHistory(prev => prev.map(item =>
-            item.id === id ? {...item, answer: item.answer + chunk.content} : item
-          ));
-        }
-      }
+      (chunk: ChunkData) => handleChunk(id, chunk)
     );
 
     // Mark this QA item as completed
@@ -88,35 +137,23 @@ function App() {
     }
   };
 
-  const handlePromptSubmit = async (expertPromptId: number) => {
+  const handlePromptSubmit = async (prompt: Prompt) => {
     const id = generateUUID();
 
     // Add a new QA item for this question
     setHistory(prev => [
       ...prev,
-      {id, question: `Expert Prompt #${expertPromptId}`, answer: "", loading: true, expertPromptId}
+      {id, question: prompt.question, answer: "", loading: true, expertPromptId: prompt.id, elapsedTime: 0}
     ]);
 
     await sendQuestion(
       {
-        expertPromptId,
-        // Use the same threadId for all questions in the current chat
+        expertPromptId: prompt.id,
         threadId: `user-${threadId}`,
+        provider: selectedProvider,
+        model: selectedModel,
       },
-      (chunk: ChunkData) => {
-        if (chunk.node === 'ai' && chunk.content === 'generating') {
-          setStatusMessage('generating...');
-        } else if (chunk.node === 'model_request') {
-          setStatusMessage('');
-          setHistory(prev => prev.map(item =>
-            item.id === id ? {...item, answer: item.answer + chunk.content} : item
-          ));
-        } else {
-          setHistory(prev => prev.map(item =>
-            item.id === id ? {...item, answer: item.answer + chunk.content} : item
-          ));
-        }
-      }
+      (chunk: ChunkData) => handleChunk(id, chunk)
     );
 
     // Mark this QA item as completed
@@ -130,10 +167,16 @@ function App() {
     setHistory([]);
     setThreadId(generateUUID());
     setIsEnhanced(false); // Reset enhance toggle
+    // Reset token counts
+    setTotalInputTokens(0);
+    setTotalOutputTokens(0);
+    setTotalTokens(0);
+    // Stop any active timer
+    setActiveTimerId(null);
   };
 
-  const handlePromptClick = (id: number) => {
-    handlePromptSubmit(id);
+  const handlePromptClick = (prompt: Prompt) => {
+    handlePromptSubmit(prompt);
     setShowPrompts(false);
   };
 
@@ -146,10 +189,37 @@ function App() {
     }
   };
 
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <>
       <h1>What’s on your mind today?</h1>
       <div className="header">
+        <div className="left-controls">
+          {/* Token Counter positioned to the left */}
+          <TokenCounter
+            totalTokens={totalTokens}
+          />
+
+          {/* Dropdowns moved to the left, styled with Tailwind */}
+          <div className="dropdown-container">
+            <select value={selectedProvider} onChange={handleProviderChange} className="dropdown-select">
+              {providers.map(p => (
+                <option key={p.provider} value={p.provider}>{p.provider}</option>
+              ))}
+            </select>
+            <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="dropdown-select">
+              {providers.find(p => p.provider === selectedProvider)?.models.map(m => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <form onSubmit={(e) => handleSubmit(e)} className='form'>
           <input
             type="text"
@@ -169,18 +239,6 @@ function App() {
             Enhance
           </button>
         </form>
-        <div className="flex items-center space-x-2">
-          <select value={selectedProvider} onChange={handleProviderChange} className="p-2 border rounded">
-            {providers.map(p => (
-              <option key={p.provider} value={p.provider}>{p.provider}</option>
-            ))}
-          </select>
-          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="p-2 border rounded">
-            {providers.find(p => p.provider === selectedProvider)?.models.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </div>
         <button type="button" className="new-chat-btn" onClick={startNewChat} title="Start a new chat">
           New Chat
         </button>
@@ -197,7 +255,14 @@ function App() {
         ) : (
           history.map(item => (
             <div key={item.id} className="qa-item">
-              <p className='user-question-box'><strong>You:</strong> {item.question}</p>
+              <div className="user-question-container">
+                <p className='user-question-box'><strong>You:</strong> {item.question}</p>
+                {(item.elapsedTime > 0 || item.loading) && (
+                  <div className="timer-box">
+                    {formatTime(item.elapsedTime)}
+                  </div>
+                )}
+              </div>
               {statusMessage && <p className="italic text-gray-400">{statusMessage}</p>}
               {item.answer ? (
                 <div className="assistant-row">
