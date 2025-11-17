@@ -1,3 +1,5 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+
 type QuestionData = {
   message?: string;
   expertPromptId?: number;
@@ -14,7 +16,7 @@ export type Provider = {
 
 export const getProviders = async (): Promise<Provider[]> => {
   try {
-    const response = await fetch('http://localhost:3001/agent/providers');
+    const response = await fetch(`${API_BASE_URL}/agent/providers`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -66,7 +68,7 @@ export const sendQuestion = async (
   onChunk?: (chunk: ChunkData) => void
 ) => {
   try {
-    const response = await fetch('http://localhost:3001/agent/stream', {
+    const response = await fetch(`${API_BASE_URL}/agent/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
