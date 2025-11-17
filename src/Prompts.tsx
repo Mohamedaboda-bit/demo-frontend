@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from 'react';
+import { API_BASE_URL } from './utils'; // Import API_BASE_URL
 
 type Prompt = {
   id: number;
@@ -18,7 +19,7 @@ export function Prompts({ onPromptClick }: PromptsProps) {
   useEffect(() => {
     async function fetchPrompts() {
       try {
-        const response = await fetch('http://localhost:3001/prompts');
+        const response = await fetch(`${API_BASE_URL}/prompts`);
         if (!response.ok) {
           throw new Error('Failed to fetch prompts');
         }
