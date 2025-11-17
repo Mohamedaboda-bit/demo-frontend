@@ -26,8 +26,7 @@ function App() {
   const [selectedModel, setSelectedModel] = useState<string>("");
 
   // State for token usage
-  const [totalInputTokens, setTotalInputTokens] = useState(0);
-  const [totalOutputTokens, setTotalOutputTokens] = useState(0);
+
   const [totalTokens, setTotalTokens] = useState(0);
 
   // State for the active timer
@@ -85,8 +84,7 @@ function App() {
       try {
         const content = JSON.parse(chunk.content);
         if (content.tokenUsage) {
-          setTotalInputTokens(prev => prev + content.tokenUsage.inputTokens);
-          setTotalOutputTokens(prev => prev + content.tokenUsage.outputTokens);
+
           setTotalTokens(prev => prev + content.tokenUsage.totalTokens);
         }
       } catch (e) {
@@ -168,8 +166,7 @@ function App() {
     setThreadId(generateUUID());
     setIsEnhanced(false); // Reset enhance toggle
     // Reset token counts
-    setTotalInputTokens(0);
-    setTotalOutputTokens(0);
+
     setTotalTokens(0);
     // Stop any active timer
     setActiveTimerId(null);
