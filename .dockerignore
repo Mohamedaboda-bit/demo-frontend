@@ -4,6 +4,10 @@ dist
 .git
 npm-debug.log
 *.log
+<<<<<<< HEAD
+=======
+.env
+>>>>>>> b9efa685d2527b09e018f40ec55183312b08230c
 *.local
 coverage
 .idea
