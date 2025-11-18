@@ -5,10 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-# Copy .env file for build-time environment variables
-COPY .env .env
-
-# Copy source files`
+# Copy the rest of the source (including .env for Vite build vars)
 COPY . .
 
 # Build the application (TypeScript compilation + Vite build)
