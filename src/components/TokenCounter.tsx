@@ -1,43 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 interface TokenCounterProps {
+  inputTokens: number;
+  outputTokens: number;
   totalTokens: number;
+  inputCost: number;
+  outputCost: number;
+  totalCost: number;
 }
 
-const TokenCounter: React.FC<TokenCounterProps> = ({ totalTokens }) => {
-  const [displayTotal, setDisplayTotal] = useState(totalTokens);
-  const [isAnimating, setIsAnimating] = useState(false);
-
-  useEffect(() => {
-    // Only animate if the value has actually changed
-    if (totalTokens !== displayTotal) {
-      setIsAnimating(true);
-      
-      // Update displayed value with a slight delay to allow animation to start
-      const updateTimer = setTimeout(() => {
-        setDisplayTotal(totalTokens);
-      }, 50); // Small delay for smooth transition
-
-      // Reset animation state after it plays
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 500); // Animation duration should match CSS transition
-
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(updateTimer);
-      };
-    }
-  }, [totalTokens, displayTotal]);
-
+const TokenCounter: React.FC<TokenCounterProps> = ({
+  inputTokens,
+  outputTokens,
+  totalTokens,
+  inputCost,
+  outputCost,
+  totalCost,
+}) => {
   return (
-    <div className={`token-counter ${isAnimating ? 'animate' : ''}`}>
-      <div className="token-label-multiline">
-        <span>Token</span>
-        <span>Usage</span>
+    <div className="token-counter-details">
+      <div className="token-section">
+        <span className="token-label">Input:</span>
+        <span className="token-value">{inputTokens}</span>
+        <span className="cost-value">(${inputCost.toFixed(6)})</span>
       </div>
-      <div className="token-value-large animate-number">
-        {displayTotal}
+      <div className="token-section">
+        <span className="token-label">Output:</span>
+        <span className="token-value">{outputTokens}</span>
+        <span className="cost-value">(${outputCost.toFixed(6)})</span>
+      </div>
+      <div className="token-section total">
+        <span className="token-label">Total:</span>
+        <span className="token-value">{totalTokens}</span>
+        <span className="cost-value">(${totalCost.toFixed(6)})</span>
       </div>
     </div>
   );

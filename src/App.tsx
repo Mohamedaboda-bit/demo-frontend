@@ -25,9 +25,12 @@ function App() {
   const [selectedProvider, setSelectedProvider] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState<string>("");
 
-  // State for token usage
-
+  const [inputTokens, setInputTokens] = useState(0);
+  const [outputTokens, setOutputTokens] = useState(0);
   const [totalTokens, setTotalTokens] = useState(0);
+  const [inputCost, setInputCost] = useState(0);
+  const [outputCost, setOutputCost] = useState(0);
+  const [totalCost, setTotalCost] = useState(0);
 
   // State for the active timer
   const [activeTimerId, setActiveTimerId] = useState<string | null>(null);
@@ -83,9 +86,13 @@ function App() {
       setActiveTimerId(null);
       try {
         const content = JSON.parse(chunk.content);
-        if (content.tokenUsage) {
-
+        if (content.tokenUsage && content.cost) {
+          setInputTokens(prev => prev + content.tokenUsage.inputTokens);
+          setOutputTokens(prev => prev + content.tokenUsage.outputTokens);
           setTotalTokens(prev => prev + content.tokenUsage.totalTokens);
+          setInputCost(prev => prev + content.cost.inputCost);
+          setOutputCost(prev => prev + content.cost.outputCost);
+          setTotalCost(prev => prev + content.cost.totalCost);
         }
       } catch (e) {
         console.error("Failed to parse token usage JSON:", e);
@@ -166,8 +173,12 @@ function App() {
     setThreadId(generateUUID());
     setIsEnhanced(false); // Reset enhance toggle
     // Reset token counts
-
+    setInputTokens(0);
+    setOutputTokens(0);
     setTotalTokens(0);
+    setInputCost(0);
+    setOutputCost(0);
+    setTotalCost(0);
     // Stop any active timer
     setActiveTimerId(null);
   };
@@ -199,7 +210,12 @@ function App() {
         <div className="left-controls">
           {/* Token Counter positioned to the left */}
           <TokenCounter
+            inputTokens={inputTokens}
+            outputTokens={outputTokens}
             totalTokens={totalTokens}
+            inputCost={inputCost}
+            outputCost={outputCost}
+            totalCost={totalCost}
           />
 
           {/* Dropdowns moved to the left, styled with Tailwind */}

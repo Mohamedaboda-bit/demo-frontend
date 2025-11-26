@@ -342,3 +342,52 @@ h1 {
     margin-bottom: 10px;
   }
 }
+/* New Token Counter Details Horizontal Layout */
+.token-counter-details {
+  padding: 10px 15px;
+  background-color: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  font-family: 'Inter', sans-serif;
+  display: flex; /* Use flexbox for horizontal layout */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  gap: 15px; /* Spacing between sections (Input, Output, Total) */
+  align-items: center;
+  font-size: 0.9em;
+}
+
+.token-section {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap; /* Prevent wrapping within a section */
+}
+
+.token-section:not(:last-child)::after {
+  content: '|';
+  margin-left: 15px;
+  color: #a7d9f8; /* Separator color */
+}
+
+.token-label {
+  font-weight: 600;
+  color: #1e3a8a;
+  text-transform: uppercase;
+}
+
+.token-value, .cost-value {
+  color: #374151;
+}
+
+.cost-value {
+  font-weight: 500;
+  color: #3b82f6;
+}
+
+.token-section.total .token-label,
+.token-section.total .token-value,
+.token-section.total .cost-value {
+  font-weight: bold;
+  color: #1e3a8a;
+}
