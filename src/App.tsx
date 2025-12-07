@@ -127,6 +127,7 @@ function App() {
         swap: isEnhanced,
         provider: selectedProvider,
         model: selectedModel,
+        status:"dev"
       },
       (chunk: ChunkData) => handleChunk(id, chunk)
     );

@@ -10,6 +10,7 @@ type QuestionData = {
   swap?: boolean;
   provider?: string;
   model?: string;
+  status?: string;
 }
 
 export type Provider = {
